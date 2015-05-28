@@ -50,4 +50,6 @@ void oscEvent(OscMessage theOscMessage) {
     //  println(" typetag: "+theOscMessage.typetag());
     // float rotorSpeed = theOscMessage.get(1).floatValue();
     // println(" speed: " + rotorSpeed);
+    println("decrypting... ...");
+    myPort.write(1);
 }
