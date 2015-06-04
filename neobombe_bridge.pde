@@ -15,67 +15,79 @@ import processing.serial.*;
 OscP5 oscP5; 
 Serial myPort_1; 
 
-String portname_1 = "";
-boolean is_motors_on;
+boolean is_motors_on, prev_motors_state;
+
+//USER SETTINGS
+boolean is_debug_mode = false; //set the debug mode here
+String portname_1 = "/dev/cu.usbmodem1411"; //set the portnames here
 
 void setup() {
-    size(400, 400);
-    
-    frameRate(5);
-    
-    oscP5 = new OscP5(this, 7770);
+        size(400, 400);
 
-    for (int i=0; i<Serial.list ().length; i++) {
-        String this_portname = Serial.list()[i];
-        //println(this_portname);
-        if (this_portname.contains("cu.usbmodem")) { //for MACOSX
-            portname_1 = this_portname;
+        frameRate(5);
+
+        oscP5 = new OscP5(this, 7770);
+
+        for (int i=0; i<Serial.list ().length; i++) {
+                String this_portname = Serial.list()[i];
+                println(this_portname);
         }
-//        portname = "COM29"; //for Windows
-//        portname = Serial.list()[0]; //default
-    }
 
-    myPort_1 = new Serial(this, portname_1, 9600);
-    println("portname: " + portname_1);
+        myPort_1 = new Serial(this, portname_1, 9600);
+        println("\nportname 1: " + portname_1);
+        println("debug mode: " + is_debug_mode);
 }
 
 
 void draw() {
-    background(0);
-    
-    if (is_motors_on == true) {
-            myPort_1.write(1);
-    } else {
-            myPort_1.write(0);
-    }
+        background(0);
+
+        if (is_motors_on != prev_motors_state) {
+                if (is_motors_on == true) {
+                myPort_1.write('A');
+                } else {
+                myPort_1.write('B');
+                }
+        }
+        prev_motors_state = is_motors_on;
 }
 
-float firstValue, secondValue;
+float motorNum, motorSpeed;
 
 void oscEvent(OscMessage theOscMessage) {
-//     String addrPattern = theOscMessage.addrPattern();
-//     print(" addrpattern: " + addrPattern);
-//      print(" typetag: "+theOscMessage.typetag());
-     firstValue = theOscMessage.get(0).floatValue();
-     //print(" 1st: " + firstValue);
-     secondValue = theOscMessage.get(1).floatValue();
-     print(" 2nd:" + secondValue);
-    
-    if (secondValue > 0) {
-            is_motors_on = true;
-            
-    } else {
-            is_motors_on = false;
-    }
-    print(" frameCount: " + frameCount);
-    println(" is_motors_on: " + is_motors_on);
+        //     String addrPattern = theOscMessage.addrPattern();
+        //     print(" addrpattern: " + addrPattern);
+        //      print(" typetag: "+theOscMessage.typetag());
+        motorNum = theOscMessage.get(0).floatValue();
+        //print(" motor num: " + motorNum);
+        motorSpeed = theOscMessage.get(1).floatValue();
+
+        if (is_debug_mode == false) {
+                if (motorSpeed > 0) {
+                        is_motors_on = true;
+                } else {
+                        is_motors_on = false;
+                }
+        }
+
+        if (is_debug_mode == true) {
+                 print(" speed: " + motorSpeed);
+            print("\t frameCount: " + frameCount);
+            println("\t is_motors_on: " + is_motors_on);
+        }
 }
 
 void keyPressed() {
-         if (key == ESC) {
-                 stop();
-                 exit();
-         }       
+        if (key == ESC) {
+                stop();
+                exit();
+        }   
+
+        if (is_debug_mode == true) {
+                if (key == '1') {
+                        is_motors_on = !is_motors_on;
+                }
+        }
 }
 
 void stop() {
@@ -83,3 +95,4 @@ void stop() {
         oscP5 = null;
         super.stop();
 }
+
